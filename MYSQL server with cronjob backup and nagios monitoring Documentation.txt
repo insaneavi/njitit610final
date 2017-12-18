@@ -1,0 +1,69 @@
+Create mysql server on AWS using ubuntu, with cronjob to create full backup of database, and delete all backups older then 7 backups, also monitor the server/mysql services and the cronjob via nagios
+Create basic Ubuntu Box
+Then install Nagios Agent: apt-get install nagios-nrpe-server nagios-plugins-basic
+Open port TCP 5666 on this linux box
+
+Install mysql 
+sudo apt-get update
+sudo apt-get install mysql-server
+
+Open port TCP http/80 on AWS firewall
+Open port TCP 5666 on AWS firewall
+Install Nagios agent
+apt-get install nagios-nrpe-server nagios-plugins-basic
+
+Start to create automatic backup task, that will run daily and only keep 7 backups at once via bash script.
+
+
+
+
+this will need to be put into a bash script that will be run via cronjob
+create .sh file, put the command into the .sh file. Then make the .sh a executable file using chmod +x mysqldump.sh
+now to create a cronjob to automate this task, once working we can figure out how to only it keep 7 backups at once.
+Used : https://crontab-generator.org/ to create syntax to run every hour 
+Test the command via sh 
+ 
+Configure Nagios to Monitor the SQL health
+
+https://www.youtube.com/watch?v=lO4wp6jyJb4
+Comment bind address out of your mysql config file.
+Removing the line bind-address 127.0.0.1 from /etc/mysql/my.cnf
+https://askubuntu.com/questions/272077/port-3306-appears-to-be-closed-on-my-ubuntu-server
+
+then allow root to be accessed remotely:
+https://stackoverflow.com/questions/14779104/how-to-allow-remote-connection-to-mysql
+Install this Nagios plugin:
+https://labs.consol.de/nagios/check_mysql_health/
+
+Define the command in Nagios
+#mySQL health Command definitation
+define command{
+       command_name   check_mysql_health
+       command_line $USER1$/check_mysql_health -H $ARG1$ --port $ARG2$ --username $ARG3$ --password $ARG4$ --mode $ARG5$
+       }
+
+Define the services in Nagios:
+
+# Check to see if MYSQL is running on mysql server running check_mysql_health plugin
+define service{
+        use                     generic-service
+        host_name               mySQLserver
+        service_description     MYSQL service uptime - Final Deliverable
+        check_command           check_mysql_health!ec2-13-59-26-22.us-east-2.compute.amazonaws.com!3306!root!password!uptime
+        }
+
+define service{
+        use                     generic-service
+        host_name               mySQLserver
+        service_description     MYSQL service connection-time - Final Deliverable
+        check_command           check_mysql_health!ec2-13-59-26-22.us-east-2.compute.amazonaws.com!3306!root!password!connection-time
+        }
+define service{
+        use                     generic-service
+        host_name               mySQLserver
+        service_description     MYSQL # of slow queries - Final Deliverable
+        check_command           check_mysql_health!ec2-13-59-26-22.us-east-2.compute.amazonaws.com!3306!root!password!slow-queries
+        }
+Configure Nagios to monitor the MYSQL backup Cron job
+
+https://arkit.co.in/monitor-cronjob-execution-status-using-nagios/

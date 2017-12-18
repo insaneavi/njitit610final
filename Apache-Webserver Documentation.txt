@@ -1,0 +1,30 @@
+Creating AWS - Apache/Web Server to be monitored by Nagios.
+Create basic Ubuntu box
+Install apache - 
+sudo apt-get update
+sudo apt-get install apache2
+Then install Nagios Agent -
+apt-get install nagios-nrpe-server nagios-plugins-basic
+Open Port TCP 5666 on AWS firewall (to allow NRPE plugin to communicate with nagios)
+Allow Communication of the NAGIOS plugin via DNS name of nagios main server. (default only allows localhost)
+Add Host on Nagios
+example:
+define host{
+        use             linux-server  ; Inherit default values from a template
+        host_name       NagiosWebServer       ; The name we're giving to this host
+        alias           Amazon AWS Apache Webserver  ; A longer name associated with the host
+        address         ec2-18-216-245-174.us-east-2.compute.amazonaws.com  ; IP address of the host
+        }
+Add service to monitor SSH and HTTP via nagios
+define service{
+        use                             generic-service         ; Name of service template to use
+        host_name                       NagiosWebServer
+        service_description             SSH
+        check_command                   check_ssh
+        }
+define service{
+        use                             generic-service
+        host_name                       NagiosWebServer
+        service_description             HTTP - Final Project Common Deliverables - AWS Web Server with Apache
+        check_command                   check_http
+        }
